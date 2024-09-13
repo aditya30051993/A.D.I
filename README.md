@@ -2,7 +2,9 @@
 
 A.D.I. is a cutting-edge tool designed to enhance interaction with documents and web content. It introduces bi-directional Co-Pilot support, enabling dynamic interaction and navigation through content, and improving real-time query responses based on the current context.
 
-![Flow Diagram](docs/assets/flow.gif)
+<p align="center">
+  <img src="docs/assets/flow.gif" alt="Flow Diagram" />
+</p>
 
 ## Features
 
@@ -10,7 +12,9 @@ A.D.I. is a cutting-edge tool designed to enhance interaction with documents and
 - **Enhanced Q/A Capabilities:** Allows real-time answers based on the current context of the content.
 - **Extended Interaction:** Facilitates the use of document and web content as inputs in ongoing Q/A sessions.
 
-![UML Segmentation](docs/assets/uml-segmentation.png)
+<p align="center">
+  <img src="docs/assets/uml-segmentation.png" alt="UML Segmentation Diagram" />
+</p>
 
 ## Contributing
 
