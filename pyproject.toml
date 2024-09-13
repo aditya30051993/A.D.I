@@ -1,0 +1,18 @@
+[tool.poetry]
+name = "a-d-i"
+version = "0.1.0"
+description = "A.D.I. is a cutting-edge tool designed to enhance interaction with documents and web content. It introduces bi-directional Co-Pilot support, enabling dynamic interaction and navigation through content, and improving real-time query responses based on the current context"
+authors = ["Aditya <aditya30051993@gmail.com>"]
+license = "MIT"
+readme = "README.md"
+packages = [{include = "a"}]
+
+[tool.poetry.dependencies]
+python = "^3.12"
+fastapi = "^0.114.1"
+uvicorn = "^0.30.6"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
