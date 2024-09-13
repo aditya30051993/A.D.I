@@ -11,6 +11,7 @@ packages = [{include = "a"}]
 python = "^3.12"
 fastapi = "^0.114.1"
 uvicorn = "^0.30.6"
+pymilvus = "^2.4.6"
 
 
 [build-system]
