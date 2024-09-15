@@ -18,6 +18,8 @@ langchain = "^0.3.0"
 langchain-community = "^0.3.0"
 pypdf = "^4.3.1"
 langchain-huggingface = "^0.1.0"
+selenium = "^4.24.0"
+beautifulsoup4 = "^4.12.3"
 
 
 [build-system]
