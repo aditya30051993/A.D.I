@@ -1,55 +1,67 @@
+import os
+import tempfile
 from fastapi import APIRouter, UploadFile, File
-from ..core.config import collection
-from ..model.embedding_model import model
-from PyPDF2 import PdfReader
+from langchain_text_splitters import RecursiveCharacterTextSplitter
+from langchain_community.document_loaders import PyPDFLoader
+from langchain_community.vectorstores import Milvus
+from langchain_community.llms import Ollama
+from langchain.callbacks.manager import CallbackManager
+from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
+from langchain import hub
+from langchain.chains import RetrievalQA
+from langchain_huggingface import HuggingFaceEmbeddings
+
 
 router = APIRouter()
 
+embedding_function = HuggingFaceEmbeddings(
+    model_name="all-MiniLM-L6-v2", show_progress=True
+)
+vector_store = Milvus(embedding_function=embedding_function, auto_id=True)
+
+llm = Ollama(
+    model="llama3.1",
+    callback_manager=CallbackManager([StreamingStdOutCallbackHandler()]),
+    stop=["<|eot_id|>"],
+    base_url="http://192.168.6.201:9000",
+)
+
+
 @router.post("/upload_pdf/")
 async def upload_pdf(file: UploadFile = File(...)):
-    reader = PdfReader(file.file)
-    text = ""
-    for page in reader.pages:
-        text += page.extract_text()
+    # Create a temporary file to store the uploaded PDF
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as temp_file:
+        temp_file.write(await file.read())  # Save the file contents
+        temp_file.flush()  # Ensure data is written to disk
+        temp_file_path = temp_file.name  # Get the file path
 
-    MAX_TEXT_LENGTH = 500
-    text_chunks = [text[i:i + MAX_TEXT_LENGTH] for i in range(0, len(text), MAX_TEXT_LENGTH)]
+    try:
+        # Load the PDF using the PyPDFLoader
+        loader = PyPDFLoader(temp_file_path)
+        data = loader.load()
 
-    for chunk in text_chunks:
-        doc_embedding = model.encode([chunk], convert_to_numpy=True)
-        entities = [
-            doc_embedding.tolist(),
-            [chunk]
-        ]
-        collection.insert(entities)
+        text_splitter = RecursiveCharacterTextSplitter(
+            chunk_size=1000, chunk_overlap=200
+        )
+        splits = text_splitter.split_documents(data)
+        vector_store.add_documents(documents=splits)
 
-    return {"message": "PDF uploaded and stored successfully."}
+        return {"message": "PDF uploaded and stored successfully."}
+
+    finally:
+        # Delete the temporary file after processing
+        if os.path.exists(temp_file_path):
+            os.remove(temp_file_path)
+
 
 @router.get("/search/")
 async def search(query: str):
-    query_embedding = model.encode([query], convert_to_numpy=True)
+    prompt = hub.pull("rlm/rag-prompt")
 
-    try:
-        results = collection.search(
-            data=query_embedding.tolist(),
-            anns_field="embedding",
-            param={"metric_type": "COSINE", "params": {"nprobe": 10}},
-            limit=5,
-        )
-        
-        search_results = []
-        for result in results:
-            for hit in result:
-                ids = [hit.id]
-                collection.load()
-                query_result = collection.query(expr=f"id in {ids}", output_fields=["text"])
-                search_results.append({
-                    "id": hit.id,
-                    "distance": hit.distance,
-                    "text": query_result[0]["text"]
-                })
+    qa_chain = RetrievalQA.from_chain_type(
+        llm, retriever=vector_store.as_retriever(), chain_type_kwargs={"prompt": prompt}
+    )
 
-        return {"results": search_results}
+    result = qa_chain.invoke({"query": query})
 
-    except Exception as e:
-        return {"error": str(e)}
+    return result

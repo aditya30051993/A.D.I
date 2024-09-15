@@ -12,12 +12,12 @@ python = "^3.12"
 fastapi = "^0.114.1"
 uvicorn = "^0.30.6"
 pymilvus = "^2.4.6"
-langchain = "^0.2.16"
 openai = "^1.45.0"
-pypdf2 = "^3.0.1"
-langchain-community = "^0.2.16"
 python-multipart = "^0.0.9"
-sentence-transformers = "^3.1.0"
+langchain = "^0.3.0"
+langchain-community = "^0.3.0"
+pypdf = "^4.3.1"
+langchain-huggingface = "^0.1.0"
 
 
 [build-system]
